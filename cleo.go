@@ -35,13 +35,9 @@ func Max(a ...int) int {
 var iIndex *InvertedIndex
 var fIndex *ForwardIndex
 
-//var filter *bloom.BloomFilter
-
 func main() {
 	iIndex = NewInvertedIndex()
 	fIndex = NewForwardIndex()
-
-	//	filter = bloom.New(20*n, 5) // load of 20, 5 keys
 
 	InitIndex(iIndex, fIndex)
 
@@ -54,9 +50,7 @@ func main() {
 func Search(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	query := vars["query"]
-	//quantity := vars["quantity"]
-	//qty, _ := strconv.Atoi(quantity)
-	//fmt.Println("Quantity", qty)
+
 	searchResult := CleoSearch(iIndex, fIndex, query)
 	sort.Sort(ByScore{searchResult})
 	myJson, _ := json.Marshal(searchResult)
@@ -76,7 +70,6 @@ func InitIndex(iIndex *InvertedIndex, fIndex *ForwardIndex) {
 			break
 		}
 		filter := computeBloomFilter(line)
-		//fmt.Println(filter, line)
 
 		iIndex.AddDoc(docID, line, filter) //insert into inverted index
 		fIndex.AddDoc(docID, line)         //Insert into forward index
@@ -104,9 +97,8 @@ func CleoSearch(iIndex *InvertedIndex, fIndex *ForwardIndex, query string) []Ran
 
 	candidates := iIndex.Search(query) //First get candidates from Inverted Index
 	qBloom := computeBloomFilter(query)
-	//fmt.Println(qBloom, query)
+
 	for _, i := range candidates {
-		//fmt.Printf("%+v-{%s-%d}-", i, fIndex.itemAt(i.docId), qBloom)
 		if TestBytesFromQuery(i.bloom, qBloom) == true { //Filter using Bloom Filter
 			c := fIndex.itemAt(i.docId) //Get whole document from Forward Index
 			score := Score(query, c)    //Score the Forward Index between 0-1
@@ -120,10 +112,8 @@ func CleoSearch(iIndex *InvertedIndex, fIndex *ForwardIndex, query string) []Ran
 }
 
 func TestBytesFromQuery(bf int, qBloom int) bool {
-	//fmt.Println(bf.B, "-", qBloom.B)
 	for i := uint(0); i < 64; i++ {
 		//a & (1 << idx) == b & (1 << idx)
-		//fmt.Println("true", bf&(1<<i), qBloom&(1<<i))
 		if (bf&(1<<i) != (1 << i)) && qBloom&(1<<i) == (1<<i) {
 			return false
 		}
@@ -140,7 +130,6 @@ func Score(query, candidate string) float64 {
 func LevenshteinDistance(s, t string) int {
 	m := len(s)
 	n := len(t)
-	//width := Min(m, n)
 	width := n - 1
 	d := make([]int, m*n)
 	//y * w + h for position in array
@@ -181,20 +170,16 @@ type Document struct {
 const (
 	FNV_BASIS_64 = uint64(14695981039346656037)
 	FNV_PRIME_64 = uint64((1 << 40) + 435)
-	//FNV_OFFSET_64 = uint64(14695981039346656037)
+
 	FNV_MASK_64 = uint64(^uint64(0) >> 1)
 	NUM_BITS    = 64
 
 	FNV_BASIS_32 = uint32(0x811c9dc5)
 	FNV_PRIME_32 = uint32((1 << 24) + 403)
 	FNV_MASK_32  = uint32(^uint32(0) >> 1)
-
-	//FNV_PRIME_8 = uint8(1099511628211)
 )
 
 func computeBloomFilter(s string) int {
-	//filter := bloom.New(64, 2)
-	//cnt := Min(prefixLen, len(s))
 	cnt := len(s)
 
 	if cnt <= 0 {
@@ -202,19 +187,16 @@ func computeBloomFilter(s string) int {
 	}
 
 	var filter int
-	hash := uint64(0) //FNV_BASIS_64
+	hash := uint64(0)
 
 	for i := 0; i < cnt; i++ {
 		c := s[i]
 
-		//filter.Add([]byte(c))
 		hash ^= uint64(0xFF & c)
 		hash *= FNV_PRIME_64
-		//hash &= FNV_MASK_64
 
 		hash ^= uint64(0xFF & (c >> 16))
 		hash *= FNV_PRIME_64
-		//hash &= FNV_MASK_64
 
 		bitpos := hash % NUM_BITS
 		if bitpos < 0 {
