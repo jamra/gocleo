@@ -1,9 +1,25 @@
+/*
+ * Copyright (c) 2011 Jamra.source@gmail.com
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package main
 
 import (
 	"bufio"
 	"code.google.com/p/gorilla/mux"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -34,8 +50,13 @@ func Max(a ...int) int {
 
 var iIndex *InvertedIndex
 var fIndex *ForwardIndex
+var corpusPath string
 
 func main() {
+	flag.StringVar(&corpusPath, "Corpus_File_Path", "w1_fixed.txt", "The path to the corpus file.  A file with terms separated by \n")
+	var port string
+	flag.StringVar(&port, "port", "8080", "The port you want the web call to listen on.")
+
 	iIndex = NewInvertedIndex()
 	fIndex = NewForwardIndex()
 
@@ -44,9 +65,11 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/cleo/{query}", Search)
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
+//Search handles the web requests and writes the output as
+//json data.  
 func Search(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	query := vars["query"]
@@ -59,7 +82,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 
 func InitIndex(iIndex *InvertedIndex, fIndex *ForwardIndex) {
 	//Read corpus
-	file, _ := os.Open("w1_fixed.txt")
+	file, _ := os.Open(corpusPath)
 
 	r := bufio.NewReader(file)
 	docID := 1
@@ -90,6 +113,10 @@ type RankedResult struct {
 	Score float64
 }
 
+//This is the meat of the search.  It first checks the inverted index
+//for matches, then filters the potentially numerous results using
+//the bloom filter.  Finally, it ranks the word using a Levenshtein
+//distance.
 func CleoSearch(iIndex *InvertedIndex, fIndex *ForwardIndex, query string) []RankedResult {
 	t0 := time.Now()
 	rslt := make([]RankedResult, 0, 0)
@@ -111,6 +138,10 @@ func CleoSearch(iIndex *InvertedIndex, fIndex *ForwardIndex, query string) []Ran
 	return rslt
 }
 
+//Iterates through all of the 8 bytes (64 bits) and tests
+//each bit that is set to 1 in the query's filter against 
+//the bit in the comparison's filter.  If the bit is not
+// also 1, you do not have a match.
 func TestBytesFromQuery(bf int, qBloom int) bool {
 	for i := uint(0); i < 64; i++ {
 		//a & (1 << idx) == b & (1 << idx)
@@ -127,6 +158,10 @@ func Score(query, candidate string) float64 {
 	return float64(length-lev) / float64(length+lev) //Jacard score
 }
 
+//Levenshtein distance is the number of inserts, deletions,
+//and substitutions that differentiate one word from another.
+//This algorithm is dynamic programming found at 
+//http://en.wikipedia.org/wiki/Levenshtein_distance
 func LevenshteinDistance(s, t string) int {
 	m := len(s)
 	n := len(t)
@@ -170,15 +205,16 @@ type Document struct {
 const (
 	FNV_BASIS_64 = uint64(14695981039346656037)
 	FNV_PRIME_64 = uint64((1 << 40) + 435)
-
-	FNV_MASK_64 = uint64(^uint64(0) >> 1)
-	NUM_BITS    = 64
+	FNV_MASK_64  = uint64(^uint64(0) >> 1)
+	NUM_BITS     = 64
 
 	FNV_BASIS_32 = uint32(0x811c9dc5)
 	FNV_PRIME_32 = uint32((1 << 24) + 403)
 	FNV_MASK_32  = uint32(^uint32(0) >> 1)
 )
 
+//The bloom filter of a word is 8 bytes in length
+//and has each character added separately
 func computeBloomFilter(s string) int {
 	cnt := len(s)
 
@@ -192,12 +228,15 @@ func computeBloomFilter(s string) int {
 	for i := 0; i < cnt; i++ {
 		c := s[i]
 
+		//first hash function
 		hash ^= uint64(0xFF & c)
 		hash *= FNV_PRIME_64
 
+		//second hash function (reduces collisions for bloom)
 		hash ^= uint64(0xFF & (c >> 16))
 		hash *= FNV_PRIME_64
 
+		//position of the bit mod the number of bits (8 bytes = 64 bits)
 		bitpos := hash % NUM_BITS
 		if bitpos < 0 {
 			bitpos += NUM_BITS
@@ -208,7 +247,7 @@ func computeBloomFilter(s string) int {
 	return filter
 }
 
-//Inverted Index
+//Inverted Index - Maps the query prefix to the matching documents
 type InvertedIndex map[string][]Document
 
 func NewInvertedIndex() *InvertedIndex {
@@ -244,7 +283,7 @@ func (x *InvertedIndex) Search(query string) []Document {
 	return nil
 }
 
-//Forward Index
+//Forward Index - Maps the document id to the document
 type ForwardIndex map[int]string
 
 func NewForwardIndex() *ForwardIndex {
