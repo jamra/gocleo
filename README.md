@@ -15,4 +15,8 @@ Run the program and navigate to localhost:8080/cleo/{query}
 
 {query} is your search.  e.g.("tractor", "nightingale", "pizza")
 
-TODO:  Give a better explanation of the code.  Think about making it more of a library, splitting the web portion into a different file.  Perhaps "cleo_test.go".  
+TODO:  
+1.Make port a parameter
+2.Make the input file path a parameter
+3.Give a better explanation of the code.  
+4.Split the web portion into a different file.  Perhaps "cleo_test.go".  
