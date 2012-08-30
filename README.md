@@ -11,9 +11,9 @@ The source for Jingwei Wu's version can be found here: [Jingwei's version](https
 [gorilla mux library](http://gorilla-web.appspot.com/pkg/mux)
 
 ###Instructions
-This is a sample app
+This is a sample app:
 
-package main
+      package main
    	import "cleo"
   
    	func main(){
