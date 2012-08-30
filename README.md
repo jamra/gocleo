@@ -12,7 +12,7 @@ The source for Jingwei Wu's version can be found here: [Jingwei's version](https
 
 ###Instructions
 This is a sample app
-   	package main
+      package main
    	import "cleo"
   
    	func main(){
