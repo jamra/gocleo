@@ -11,6 +11,7 @@ The source for Jingwei Wu's version can be found here: [Jingwei's version](https
 [gorilla mux library](http://gorilla-web.appspot.com/pkg/mux)
 
 ###Instructions
+This is a sample app
    	package main
    	import "cleo"
   
@@ -21,7 +22,3 @@ The source for Jingwei Wu's version can be found here: [Jingwei's version](https
 Run the program and navigate to localhost:8080/cleo/{query}
 
 {query} is your search.  e.g.("tractor", "nightingale", "pizza")
-
-###TODO:  
- - Give a better explanation of the code.  
- - Split the web portion into a different file.  Perhaps "cleo_test.go".  
