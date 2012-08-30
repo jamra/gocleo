@@ -21,7 +21,7 @@ Basically, this is a golang version of the original program.  The original progr
 ###Instructions
 This is a sample app:
 
-      package main
+    package main
    	import "cleo"
   
    	func main(){
@@ -34,6 +34,10 @@ Run the program and navigate to localhost:8080/cleo/{query}
 
 ###Your own corpus
 You can have the search run off of your own corpus so long as each term is separated by a new line.  w1_fixed.txt is provided as an example.
+
+###Setup
+This should work with go get
+    go get github.com/jamra/gocleo
 
 ###TODO
  - Add better configurability.  I want to make the scoring mechanism a passable function.
