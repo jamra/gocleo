@@ -23,3 +23,9 @@ This is a sample app:
 Run the program and navigate to localhost:8080/cleo/{query}
 
 {query} is your search.  e.g.("tractor", "nightingale", "pizza")
+
+###Your own corpus
+You can have the search run off of your own corpus so long as each term is separated by a new line.  w1_fixed.txt is provided as an example.
+
+###TODO
+ - Add better configurability.  I want to make the scoring mechanism a passable function.
