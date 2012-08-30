@@ -40,4 +40,4 @@ This should work with go get
 
     go get github.com/jamra/gocleo
 ###TODO
- - Add better configurability.  I want to make the scoring mechanism a passable function.
+ - Add better configurability.  I want to make the scoring mechanism a parameter.
