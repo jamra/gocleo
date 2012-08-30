@@ -14,6 +14,7 @@ Basically, this is a golang version of the original program.  The original progr
  - The bloom filter of each candidate is compared against the query's bloom filter.  If it matches successfully, the candidate makes it to the next round.
  - The remaining words are scored by their [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) to the query. 
  - The final words are returned as JSON
+
 ###Dependencies
 [gorilla mux library](http://gorilla-web.appspot.com/pkg/mux)
 
