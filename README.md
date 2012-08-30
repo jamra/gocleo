@@ -38,6 +38,6 @@ You can have the search run off of your own corpus so long as each term is separ
 ###Setup
 This should work with go get
 
-    `go get github.com/jamra/gocleo`
+    go get github.com/jamra/gocleo
 ###TODO
  - Add better configurability.  I want to make the scoring mechanism a passable function.
