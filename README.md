@@ -11,12 +11,14 @@ The source for Jingwei Wu's version can be found here: [Jingwei's version](https
 [gorilla mux library](http://gorilla-web.appspot.com/pkg/mux)
 
 ###Instructions
+  '''golang
   package main
   import "cleo"
   
   func main(){
    cleo.InitAndRun("w1_fixed.txt", "8080")
   }
+  '''
 Run the program and navigate to localhost:8080/cleo/{query}
 
 {query} is your search.  e.g.("tractor", "nightingale", "pizza")
