@@ -22,7 +22,7 @@ Basically, this is a golang version of the original program.  The original progr
 This is a sample app:
 
     package main
-   	import "cleo"
+   	import "github.com/jamra/gocleo"
   
    	func main(){
    	  cleo.InitAndRun("w1_fixed.txt", "8080")
