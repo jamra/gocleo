@@ -12,7 +12,7 @@ Basically, this is a golang version of the original program.  The original progr
 ###Algorithm overview
  - The algorithm starts out by searching for matches in the inverted index.  The inverted index contains a map of the word's prefix (up to 4 chars).  Each word prefix maps to an array of document ID, bloom filter tuples.  
  - The bloom filter of each candidate is compared against the query's bloom filter.  If it matches successfully, the candidate makes it to the next round.
- - The remaining words are scored by their [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) to the query. 
+ - The remaining words are scored by their [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) to the query, then normalized using the [Jaccard coefficient](http://en.wikipedia.org/wiki/Jaccard_index).
  - The final words are returned as JSON
 
 ###Dependencies
