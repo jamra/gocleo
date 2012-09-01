@@ -13,13 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package main
+package cleo
 
 import (
 	"bufio"
 	"code.google.com/p/gorilla/mux"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -48,19 +47,19 @@ func Max(a ...int) int {
 	return max
 }
 
-var iIndex *InvertedIndex
-var fIndex *ForwardIndex
-var corpusPath string
+type indexContainer struct {
+	iIndex *InvertedIndex
+	fIndex *ForwardIndex
+}
 
-func main() {
-	flag.StringVar(&corpusPath, "Corpus_File_Path", "w1_fixed.txt", "The path to the corpus file.  A file with terms separated by \n")
-	var port string
-	flag.StringVar(&port, "port", "8080", "The port you want the web call to listen on.")
+var m *indexContainer
 
-	iIndex = NewInvertedIndex()
-	fIndex = NewForwardIndex()
+func InitAndRun(corpusPath, port string) {
+	m = &indexContainer{}
+	m.iIndex = NewInvertedIndex()
+	m.fIndex = NewForwardIndex()
 
-	InitIndex(iIndex, fIndex)
+	InitIndex(m.iIndex, m.fIndex, corpusPath)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/cleo/{query}", Search)
@@ -74,13 +73,13 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	query := vars["query"]
 
-	searchResult := CleoSearch(iIndex, fIndex, query)
+	searchResult := CleoSearch(m.iIndex, m.fIndex, query)
 	sort.Sort(ByScore{searchResult})
 	myJson, _ := json.Marshal(searchResult)
 	fmt.Fprintf(w, string(myJson))
 }
 
-func InitIndex(iIndex *InvertedIndex, fIndex *ForwardIndex) {
+func InitIndex(iIndex *InvertedIndex, fIndex *ForwardIndex, corpusPath string) {
 	//Read corpus
 	file, _ := os.Open(corpusPath)
 
