@@ -14,6 +14,8 @@ Basically, this is a golang version of the original program.  The original progr
  - The bloom filter of each candidate is compared against the query's bloom filter.  If it matches successfully, the candidate makes it to the next round.
  - The remaining words are scored by their [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) to the query, then normalized using the [Jaccard coefficient](http://en.wikipedia.org/wiki/Jaccard_index).
  - The final words are returned as JSON
+ - You can also change how scoring works if you like. You just need to provide a function that conforms to
+    func(s1, s2 string) (score float64)
 
 ###Dependencies
 [gorilla mux library](http://gorilla-web.appspot.com/pkg/mux)
@@ -25,7 +27,7 @@ This is a sample app:
    	import "github.com/jamra/gocleo"
   
    	func main(){
-   	  cleo.InitAndRun("w1_fixed.txt", "8080")
+   	  cleo.InitAndRun("w1_fixed.txt", "8080", nil) //The last parameter is optional. Defaults to Levenshtein distance normalized by Jaccard coefficient
    	}
 
 Run the program and navigate to localhost:8080/cleo/{query}
@@ -40,4 +42,5 @@ This should work with go get
 
     go get github.com/jamra/gocleo
 ###TODO
- - Add better configurability.  I want to make the scoring mechanism a parameter.
+ - Change the mechanism to add, remove, and modify words in the corpus. 
+ - Unit testing
