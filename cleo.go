@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2011 jamra.source@gmail.com
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -53,11 +53,17 @@ type indexContainer struct {
 }
 
 var m *indexContainer
+var chosenScoringFunction fn_score
 
-func InitAndRun(corpusPath, port string) {
+func InitAndRun(corpusPath, port string, scoringFunction fn_score) {
 	m = &indexContainer{}
 	m.iIndex = NewInvertedIndex()
 	m.fIndex = NewForwardIndex()
+
+	chosenScoringFunction = scoringFunction
+	if scoringFunction == nil {
+		chosenScoringFunction = Score
+	}
 
 	InitIndex(m.iIndex, m.fIndex, corpusPath)
 
@@ -68,7 +74,7 @@ func InitAndRun(corpusPath, port string) {
 }
 
 //Search handles the web requests and writes the output as
-//json data.  
+//json data.
 func Search(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	query := vars["query"]
@@ -126,8 +132,8 @@ func CleoSearch(iIndex *InvertedIndex, fIndex *ForwardIndex, query string) []Ran
 
 	for _, i := range candidates {
 		if TestBytesFromQuery(i.bloom, qBloom) == true { //Filter using Bloom Filter
-			c := fIndex.itemAt(i.docId) //Get whole document from Forward Index
-			score := Score(query, c)    //Score the Forward Index between 0-1
+			c := fIndex.itemAt(i.docId)              //Get whole document from Forward Index
+			score := chosenScoringFunction(query, c) //Score the Forward Index between 0-1
 			ranked := RankedResult{c, score}
 			rslt = append(rslt, ranked)
 		}
@@ -138,7 +144,7 @@ func CleoSearch(iIndex *InvertedIndex, fIndex *ForwardIndex, query string) []Ran
 }
 
 //Iterates through all of the 8 bytes (64 bits) and tests
-//each bit that is set to 1 in the query's filter against 
+//each bit that is set to 1 in the query's filter against
 //the bit in the comparison's filter.  If the bit is not
 // also 1, you do not have a match.
 func TestBytesFromQuery(bf int, qBloom int) bool {
@@ -159,7 +165,7 @@ func Score(query, candidate string) float64 {
 
 //Levenshtein distance is the number of inserts, deletions,
 //and substitutions that differentiate one word from another.
-//This algorithm is dynamic programming found at 
+//This algorithm is dynamic programming found at
 //http://en.wikipedia.org/wiki/Levenshtein_distance
 func LevenshteinDistance(s, t string) int {
 	m := len(s)
@@ -211,6 +217,8 @@ const (
 	FNV_PRIME_32 = uint32((1 << 24) + 403)
 	FNV_MASK_32  = uint32(^uint32(0) >> 1)
 )
+
+type fn_score func(word, query string) (score float64)
 
 //The bloom filter of a word is 8 bytes in length
 //and has each character added separately
