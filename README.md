@@ -42,5 +42,5 @@ This should work with go get
 
     go get github.com/jamra/gocleo
 ###TODO
- - Change the mechanism to add, remove, and modify words in the corpus. 
- - Unit testing
+ - Change the mechanism to add, remove, and modify words in the corpus. Make it restful. Post for additions. Put for updates, etc
+ - Better Unit testing
