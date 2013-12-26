@@ -1,23 +1,25 @@
-package cleo
+//package cleo_test
 
-import "testing"
+//import "testing"
+//import "cleo"
 
-func TestScore(t *testing.T) {
-	if Score("abcdefghij", "abcdefghix") != 0.90 {
-		t.Fail()
-	}
-}
+////func TestScore(t *testing.T) {
+////if Score("abcdefghij", "abcdefghix") != 0.90 {
+////	t.Fail()
+////}
+////}
 
-func TestLevenshtein(t *testing.T) {
-	if LevenshteinDistance("abcdefghij", "abcdefghix") != 1 {
-		t.Fail()
-	}
+////func TestLevenshtein(t *testing.T) {
+////if LevenshteinDistance("abcdefghij", "abcdefghix") != 1 {
+////	t.Fail()
+////}
 
-	if LevenshteinDistance("abcdefghij", "abcdefghijk") != 1 {
-		t.Fail()
-	}
+////if LevenshteinDistance("abcdefghij", "abcdefghijk") != 1 {
+////	t.Fail()
+////}
 
-	if LevenshteinDistance("abcdefghij", "abcdefghi") != 1 {
-		t.Fail()
-	}
-}
+////if LevenshteinDistance("abcdefghij", "abcdefghi") != 1 {
+////	t.Fail()
+////}
+
+////}

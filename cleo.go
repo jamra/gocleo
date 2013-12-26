@@ -160,7 +160,7 @@ func TestBytesFromQuery(bf int, qBloom int) bool {
 func Score(query, candidate string) float64 {
 	lev := LevenshteinDistance(query, candidate)
 	length := Max(len(candidate), len(query))
-	return float64(length-lev) / float64(length) //Jacard score
+	return float64(length-lev) / float64(length+lev) //Jacard score
 }
 
 //Levenshtein distance is the number of inserts, deletions,
