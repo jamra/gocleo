@@ -17,15 +17,14 @@ package cleo
 
 import (
 	"bufio"
-	"code.google.com/p/gorilla/mux"
 	"encoding/json"
+	_ "expvar"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"sort"
 	"strings"
-	"time"
 )
 
 func Min(a ...int) int {
@@ -55,7 +54,11 @@ type indexContainer struct {
 var m *indexContainer
 var chosenScoringFunction fn_score
 
-func InitAndRun(corpusPath, port string, scoringFunction fn_score) {
+func init() {
+	http.HandleFunc("/cleo", searchHandler)
+}
+
+func BuildIndexes(corpusPath string, scoringFunction fn_score) {
 	m = &indexContainer{}
 	m.iIndex = NewInvertedIndex()
 	m.fIndex = NewForwardIndex()
@@ -66,18 +69,12 @@ func InitAndRun(corpusPath, port string, scoringFunction fn_score) {
 	}
 
 	InitIndex(m.iIndex, m.fIndex, corpusPath)
-
-	r := mux.NewRouter()
-	r.HandleFunc("/cleo/{query}", Search)
-	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 //Search handles the web requests and writes the output as
 //json data.
-func Search(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	query := vars["query"]
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.FormValue("query")
 
 	searchResult := CleoSearch(m.iIndex, m.fIndex, query)
 	sort.Sort(ByScore{searchResult})
@@ -87,7 +84,11 @@ func Search(w http.ResponseWriter, r *http.Request) {
 
 func InitIndex(iIndex *InvertedIndex, fIndex *ForwardIndex, corpusPath string) {
 	//Read corpus
-	file, _ := os.Open(corpusPath)
+	file, err := os.Open(corpusPath)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	r := bufio.NewReader(file)
 	docID := 1
@@ -123,9 +124,7 @@ type RankedResult struct {
 //the bloom filter.  Finally, it ranks the word using a Levenshtein
 //distance.
 func CleoSearch(iIndex *InvertedIndex, fIndex *ForwardIndex, query string) []RankedResult {
-	t0 := time.Now()
 	rslt := make([]RankedResult, 0, 0)
-	fmt.Println("Query:", query)
 
 	candidates := iIndex.Search(query) //First get candidates from Inverted Index
 	qBloom := computeBloomFilter(query)
@@ -138,8 +137,6 @@ func CleoSearch(iIndex *InvertedIndex, fIndex *ForwardIndex, query string) []Ran
 			rslt = append(rslt, ranked)
 		}
 	}
-	t1 := time.Now()
-	fmt.Printf("The call took %v to run.\n", t1.Sub(t0))
 	return rslt
 }
 
