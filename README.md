@@ -44,4 +44,3 @@ This should work with go get
 ###TODO
  - Give the user the ability to add and remove words from the index.
  - More robust Unit testing
- - gitignore file for removing any executables (i.e. the examples executable)
