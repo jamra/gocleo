@@ -17,9 +17,6 @@ Basically, this is a golang version of the original program.  The original progr
  - You can also change how scoring works if you like. You just need to provide a function that conforms to
     func(s1, s2 string) (score float64)
 
-###Dependencies
-[gorilla mux library](http://gorilla-web.appspot.com/pkg/mux)
-
 ###Instructions
 This is a sample app:
 
