@@ -14,7 +14,7 @@
  * the License.
  */
  
-//Package cleo provides a fast search algorithm for prefix matching large amounts of text. 
+// Package cleo provides a fast search algorithm for prefix matching large amounts of text. 
 package cleo
 
 import (
