@@ -13,6 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+ 
+//Package cleo provides a fast search algorithm for prefix matching large amounts of text. 
 package cleo
 
 import (
