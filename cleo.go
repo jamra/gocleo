@@ -169,29 +169,41 @@ func Score(query, candidate string) float64 {
 func LevenshteinDistance(s, t string) int {
 	m := len(s)
 	n := len(t)
-	width := n - 1
-	d := make([]int, m*n)
-	//y * w + h for position in array
-	for i := 1; i < m; i++ {
-		d[i*width+0] = i
+
+	// Handle edge cases
+	if m == 0 {
+		return n
+	}
+	if n == 0 {
+		return m
 	}
 
-	for j := 1; j < n; j++ {
+	width := n + 1
+	d := make([]int, (m+1)*width)
+
+	// Initialize first row and column
+	for i := 0; i <= m; i++ {
+		d[i*width+0] = i
+	}
+	for j := 0; j <= n; j++ {
 		d[0*width+j] = j
 	}
 
-	for j := 1; j < n; j++ {
-		for i := 1; i < m; i++ {
-			if s[i] == t[j] {
+	// Fill the DP table
+	for j := 1; j <= n; j++ {
+		for i := 1; i <= m; i++ {
+			if s[i-1] == t[j-1] {
 				d[i*width+j] = d[(i-1)*width+(j-1)]
 			} else {
-				d[i*width+j] = Min(d[(i-1)*width+j]+1, //deletion
-					d[i*width+(j-1)]+1,     //insertion
-					d[(i-1)*width+(j-1)]+1) //substitution
+				d[i*width+j] = Min(
+					d[(i-1)*width+j]+1,     // deletion
+					d[i*width+(j-1)]+1,     // insertion
+					d[(i-1)*width+(j-1)]+1) // substitution
 			}
 		}
 	}
-	return d[m*(width)+0]
+
+	return d[m*width+n]
 }
 
 func getPrefix(query string) string {
