@@ -200,12 +200,8 @@ func (ab *AutomatonBuilder) buildRecursive(keys []string, depth int, stateID uin
 		ab.automaton.States[stateID].IsFinal = true
 	}
 	
-	// Process each character group
-	for char := byte(0); char <= 255; char++ {
-		group, exists := groups[char]
-		if !exists {
-			continue
-		}
+	// Process each character group (only process existing characters)
+	for char, group := range groups {
 		
 		// Create target state
 		targetState := ab.automaton.AddState(false, 0)
