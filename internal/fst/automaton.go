@@ -176,6 +176,7 @@ func (ab *AutomatonBuilder) BuildFromStrings(keys []string) *Automaton {
 }
 
 // buildRecursive recursively builds the automaton from sorted strings
+// buildRecursive recursively builds the automaton from sorted strings
 func (ab *AutomatonBuilder) buildRecursive(keys []string, depth int, stateID uint32) {
 	if len(keys) == 0 {
 		return
@@ -202,12 +203,32 @@ func (ab *AutomatonBuilder) buildRecursive(keys []string, depth int, stateID uin
 	
 	// Process each character group (only process existing characters)
 	for char, group := range groups {
+		// Filter group to only include keys that continue past this character
+		var filteredGroup []string
+		var hasTerminatingKey bool
+		
+		for _, key := range group {
+			if depth+1 < len(key) {
+				// Key continues beyond this character
+				filteredGroup = append(filteredGroup, key)
+			} else if depth+1 == len(key) {
+				// This key ends exactly at the next depth
+				hasTerminatingKey = true
+			}
+		}
 		
 		// Create target state
 		targetState := ab.automaton.AddState(false, 0)
 		ab.automaton.AddTransition(stateID, char, targetState, 0)
 		
-		// Recursively build for this group
-		ab.buildRecursive(group, depth+1, targetState)
+		// Mark target as final if any key terminates there
+		if hasTerminatingKey {
+			ab.automaton.States[targetState].IsFinal = true
+		}
+		
+		// Recursively build for filtered group (only keys that continue)
+		if len(filteredGroup) > 0 {
+			ab.buildRecursive(filteredGroup, depth+1, targetState)
+		}
 	}
 }
