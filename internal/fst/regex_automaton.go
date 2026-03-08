@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"regexp/syntax"
 	"sort"
+	"strings"
 )
 
 // RegexAutomaton represents a compiled regular expression as a finite state automaton
@@ -37,14 +38,21 @@ type NFA struct {
 
 // NewRegexAutomaton compiles a regular expression into an NFA using Thompson's Construction
 func NewTrueRegexAutomaton(pattern string) (*TrueRegexAutomaton, error) {
-	// First compile with Go's regexp for validation
-	regex, err := regexp.Compile(pattern)
+	// For FST intersection, we typically want to match complete keys
+	// So we'll anchor the pattern if not already anchored  
+	anchoredPattern := pattern
+	if !strings.HasPrefix(pattern, "^") && !strings.HasSuffix(pattern, "$") {
+		anchoredPattern = "^" + pattern + "$"
+	}
+
+	// First compile with Go's regexp for validation (use anchored version)
+	regex, err := regexp.Compile(anchoredPattern)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse the regex into syntax tree
-	parsed, err := syntax.Parse(pattern, syntax.Perl)
+	// Parse the anchored regex into syntax tree
+	parsed, err := syntax.Parse(anchoredPattern, syntax.Perl)
 	if err != nil {
 		return nil, err
 	}
@@ -458,6 +466,21 @@ func (ra *TrueRegexAutomaton) hasAcceptingState(states []NFAStateID) bool {
 func (ra *TrueRegexAutomaton) MatchString(s string) bool {
 	return ra.regex.MatchString(s)
 }
+
+// InternalNFA exposes the internal NFA for debugging
+func (ra *TrueRegexAutomaton) InternalNFA() *NFA {
+	return ra.nfa
+}
+
+// SimulateNFA exposes NFA simulation for testing
+func (ra *TrueRegexAutomaton) SimulateNFA(input string) bool {
+	return ra.simulateNFA(input)
+}
+
+// States returns the internal states map for debugging
+func (nfa *NFA) States() map[NFAStateID]*NFAState {
+	return nfa.states
+}
 // TrueAutomataIntersection performs mathematical intersection of FST and NFA
 func (ra *TrueRegexAutomaton) TrueAutomataIntersection(fst *FST) ([]string, error) {
 	results := make([]string, 0)
@@ -482,7 +505,7 @@ func (ra *TrueRegexAutomaton) TrueAutomataIntersection(fst *FST) ([]string, erro
 	
 	// For each first character, check if NFA can consume it
 	for char, keys := range firstCharMap {
-		nextStates := ra.computeNFATransitionsChar(startStates, char)
+		nextStates := ra.computeNFATransitions(startStates, char)
 		
 		if len(nextStates) > 0 {
 			// NFA can consume this character, test all keys starting with it
@@ -503,7 +526,7 @@ func (ra *TrueRegexAutomaton) simulateNFA(input string) bool {
 	currentStates := ra.epsilonClosure([]NFAStateID{ra.nfa.start})
 	
 	for _, char := range []byte(input) {
-		currentStates = ra.computeNFATransitionsChar(currentStates, char)
+		currentStates = ra.computeNFATransitions(currentStates, char)
 		if len(currentStates) == 0 {
 			return false
 		}
@@ -512,8 +535,8 @@ func (ra *TrueRegexAutomaton) simulateNFA(input string) bool {
 	return ra.hasAcceptingState(currentStates)
 }
 
-// computeNFATransitionsChar computes NFA transitions for a character
-func (ra *TrueRegexAutomaton) computeNFATransitionsChar(currentStates []NFAStateID, char byte) []NFAStateID {
+// computeNFATransitions computes NFA transitions for a character
+func (ra *TrueRegexAutomaton) computeNFATransitions(currentStates []NFAStateID, char byte) []NFAStateID {
 	nextStates := make([]NFAStateID, 0)
 	stateSet := make(map[NFAStateID]bool)
 	
