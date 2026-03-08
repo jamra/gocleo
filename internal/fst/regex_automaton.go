@@ -458,3 +458,75 @@ func (ra *TrueRegexAutomaton) hasAcceptingState(states []NFAStateID) bool {
 func (ra *TrueRegexAutomaton) MatchString(s string) bool {
 	return ra.regex.MatchString(s)
 }
+// TrueAutomataIntersection performs mathematical intersection of FST and NFA
+func (ra *TrueRegexAutomaton) TrueAutomataIntersection(fst *FST) ([]string, error) {
+	results := make([]string, 0)
+	visited := make(map[string]bool)
+	
+	// Start with NFA epsilon closure of start state
+	startStates := ra.epsilonClosure([]NFAStateID{ra.nfa.start})
+	
+	// Use character-prefix grouping to reduce computations
+	firstCharMap := make(map[byte][]string)
+	
+	// Group keys by first character
+	iterator := fst.Iterator()
+	for iterator.HasNext() {
+		key, _ := iterator.Next()
+		keyStr := string(key)
+		if len(keyStr) > 0 {
+			firstChar := keyStr[0]
+			firstCharMap[firstChar] = append(firstCharMap[firstChar], keyStr)
+		}
+	}
+	
+	// For each first character, check if NFA can consume it
+	for char, keys := range firstCharMap {
+		nextStates := ra.computeNFATransitionsChar(startStates, char)
+		
+		if len(nextStates) > 0 {
+			// NFA can consume this character, test all keys starting with it
+			for _, key := range keys {
+				if !visited[key] && ra.simulateNFA(key) {
+					results = append(results, key)
+					visited[key] = true
+				}
+			}
+		}
+	}
+	
+	return results, nil
+}
+
+// simulateNFA executes the NFA on input string
+func (ra *TrueRegexAutomaton) simulateNFA(input string) bool {
+	currentStates := ra.epsilonClosure([]NFAStateID{ra.nfa.start})
+	
+	for _, char := range []byte(input) {
+		currentStates = ra.computeNFATransitionsChar(currentStates, char)
+		if len(currentStates) == 0 {
+			return false
+		}
+	}
+	
+	return ra.hasAcceptingState(currentStates)
+}
+
+// computeNFATransitionsChar computes NFA transitions for a character
+func (ra *TrueRegexAutomaton) computeNFATransitionsChar(currentStates []NFAStateID, char byte) []NFAStateID {
+	nextStates := make([]NFAStateID, 0)
+	stateSet := make(map[NFAStateID]bool)
+	
+	for _, state := range currentStates {
+		if transitions, exists := ra.nfa.states[state].transitions[char]; exists {
+			for _, nextState := range transitions {
+				if !stateSet[nextState] {
+					stateSet[nextState] = true
+					nextStates = append(nextStates, nextState)
+				}
+			}
+		}
+	}
+	
+	return ra.epsilonClosure(nextStates)
+}
