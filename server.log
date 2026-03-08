@@ -1,0 +1,2 @@
+# command-line-arguments
+./simple_server.go:21:17: undefined: fst.NewBuilder
